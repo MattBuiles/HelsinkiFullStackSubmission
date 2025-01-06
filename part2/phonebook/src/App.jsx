@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import communication from './services/communication'  // Import communication module
 import Filter from './components/Filter'
 import Persons from './components/Persons'
 import PersonForm from './components/PersonForm'
@@ -10,18 +10,29 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('')
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        setPersons(response.data)
+    communication
+      .getAll()
+      .then(initialPersons => {
+        setPersons(initialPersons)
       })
   }, [])
 
 
   const addPerson = (event) => {
     if (persons.find(person => person.name === newName)) {
-      alert(`${newName} is already added to phonebook`)
+      const person = persons.find(person => person.name === newName)
+      if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
+        const changedPerson = { ...person, number: newNumber }
+        communication
+          .update(person.id, changedPerson)
+          .then(returnedPerson => {
+            setPersons(persons.map(person => person.id !== returnedPerson.id ? person : returnedPerson))
+          })
+        setNewName('')
+        setNewNumber('')
+      }
       return
+      
     }
     event.preventDefault()
     const personObject = {
@@ -29,9 +40,23 @@ const App = () => {
       number: newNumber
     }
 
-    setPersons(persons.concat(personObject))
+    communication
+      .create(personObject)
+      .then(returnedPerson => {
+        setPersons(persons.concat(returnedPerson))
+      })
+
     setNewName('')
     setNewNumber('')
+  }
+
+  const deletePerson = (id) => {
+    if (window.confirm(`Delete ${persons.find(person => person.id === id).name} ?`))
+      communication
+        .del(id)
+        .then(() => {
+          setPersons(persons.filter(person => person.id !== id))
+        })
   }
 
   const handleNameChange = (event) => {
@@ -54,7 +79,7 @@ const App = () => {
       <h2>Add a new</h2>
       <PersonForm addPerson={addPerson} newName={newName} handleNameChange={handleNameChange} newNumber={newNumber} handleNumberChange={handleNumberChange} />
       <h2>Numbers</h2>
-      <Persons persons={persons} filter={filter} />
+      <Persons persons={persons} filter={filter} delete={deletePerson} />
     </div>
   )
 }
