@@ -3,11 +3,15 @@ import communication from './services/communication'  // Import communication mo
 import Filter from './components/Filter'
 import Persons from './components/Persons'
 import PersonForm from './components/PersonForm'
+import Notification from './components/Notification'
+import ErrorMessage from './components/ErrorMessage'
 
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
+  const [message, setMessage] = useState(null)
+  const [errorMessage, setErrorMessage] = useState(null)
 
   useEffect(() => {
     communication
@@ -27,6 +31,14 @@ const App = () => {
           .update(person.id, changedPerson)
           .then(returnedPerson => {
             setPersons(persons.map(person => person.id !== returnedPerson.id ? person : returnedPerson))
+          })
+          .catch(error => {
+            setErrorMessage(`Information of ${newName} has already been removed from server`)
+            console.log(error)
+            setTimeout(() => {
+              setErrorMessage(null)
+            }, 4000)
+            setPersons(persons.filter(person => person.id !== person.id))
           })
         setNewName('')
         setNewNumber('')
@@ -48,6 +60,12 @@ const App = () => {
 
     setNewName('')
     setNewNumber('')
+
+    setMessage(`Added ${newName}`)
+    setTimeout(() => {
+      setMessage(null)
+    }, 4000)
+
   }
 
   const deletePerson = (id) => {
@@ -75,6 +93,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <ErrorMessage message={errorMessage} />
+      <Notification message={message} />
       <Filter filter={filter} handleFilterChange={handleFilterChange}/>
       <h2>Add a new</h2>
       <PersonForm addPerson={addPerson} newName={newName} handleNameChange={handleNameChange} newNumber={newNumber} handleNumberChange={handleNumberChange} />
