@@ -23,30 +23,35 @@ const App = () => {
 
 
   const addPerson = (event) => {
+    event.preventDefault()
     if (persons.find(person => person.name === newName)) {
       const person = persons.find(person => person.name === newName)
       if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
         const changedPerson = { ...person, number: newNumber }
+        
         communication
           .update(person.id, changedPerson)
           .then(returnedPerson => {
-            setPersons(persons.map(person => person.id !== returnedPerson.id ? person : returnedPerson))
+            setPersons(persons.map(p => p.id !== person.id ? p : returnedPerson))
+            setMessage(`Updated ${newName}'s number`)
+            setTimeout(() => {
+              setMessage(null)
+            }, 5000)
           })
           .catch(error => {
-            setErrorMessage(`Information of ${newName} has already been removed from server`)
-            console.log(error)
+            setErrorMessage(error.response?.data?.error || `Information of ${newName} has already been removed from server`)
             setTimeout(() => {
               setErrorMessage(null)
-            }, 4000)
-            setPersons(persons.filter(person => person.id !== person.id))
+            }, 5000)
+            setPersons(persons.filter(p => p.id !== person.id))
           })
+        
         setNewName('')
         setNewNumber('')
       }
       return
-      
     }
-    event.preventDefault()
+
     const personObject = {
       name: newName,
       number: newNumber
@@ -56,16 +61,20 @@ const App = () => {
       .create(personObject)
       .then(returnedPerson => {
         setPersons(persons.concat(returnedPerson))
+        setMessage(`Added ${newName}`)
+        setTimeout(() => {
+          setMessage(null)
+        }, 5000)
+      })
+      .catch(error => {
+        setErrorMessage(error.response?.data?.error || 'Failed to add person')
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
       })
 
     setNewName('')
     setNewNumber('')
-
-    setMessage(`Added ${newName}`)
-    setTimeout(() => {
-      setMessage(null)
-    }, 4000)
-
   }
 
   const deletePerson = (id) => {
