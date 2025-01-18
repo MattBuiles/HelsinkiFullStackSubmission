@@ -1,6 +1,111 @@
-const { test, describe } = require('node:test')
+const { test, describe, beforeEach, after } = require('node:test')
 const assert = require('node:assert')
 const listHelper = require('../utils/list_helper')
+
+const mongoose = require('mongoose')
+const supertest = require('supertest')
+const app = require('../app')
+const api = supertest(app)
+const Blog = require('../models/blog')
+const helper = require('./test_helper')
+
+beforeEach(async () => {
+  try {
+    await Blog.deleteMany({})
+    await Blog.insertMany(helper.initialBlogs)
+  } catch (error) {
+    console.error('Error in test setup:', error)
+  }
+})
+
+describe('when there are initially some blogs saved', () => {
+  test('blogs are returned as json', async () => {
+    const response = await api
+      .get('/api/blogs')
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+    
+    assert.strictEqual(response.body.length, helper.initialBlogs.length)
+  })
+})
+
+describe("verify id property is named id", () => {
+  test("id property is named id", async () => {
+    const response = await api.get("/api/blogs")
+    response.body.forEach((blog) => {
+      assert(blog.id)
+    })
+  })
+})
+
+test("post request creates a new blog post", async () => {
+  const newBlog = {
+    title: "Test blog",
+    author: "Test author",
+    url: "https://test.com",
+    likes: 10
+  }
+
+  await api
+    .post("/api/blogs")
+    .send(newBlog)
+    .expect(200)
+    .expect("Content-Type", /application\/json/)
+
+  const blogsAtEnd = await helper.blogsInDb()
+  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
+
+  const contents = blogsAtEnd.map(blog => ({
+    title: blog.title,
+    author: blog.author,
+    url: blog.url,
+    likes: blog.likes
+  }))
+  
+  assert(contents.some(blog => 
+    blog.title === newBlog.title &&
+    blog.author === newBlog.author &&
+    blog.url === newBlog.url &&
+    blog.likes === newBlog.likes
+  ))
+})
+
+test("if likes property is missing, it will default to 0", async () => {
+  const newBlog = {
+    title: "Test blog",
+    author: "Test author",
+    url: "https://test.com"
+  }
+
+  await api
+    .post("/api/blogs")
+    .send(newBlog)
+    .expect(200)
+    .expect("Content-Type", /application\/json/)
+
+  const blogsAtEnd = await helper.blogsInDb()
+  const addedBlog = blogsAtEnd.find(blog => blog.title === newBlog.title)
+  assert.strictEqual(addedBlog.likes, 0)
+})
+
+test.only("if title and url properties are missing, return 400 Bad Request", async () => {
+  const newBlog = {
+    author: "Test author"
+  }
+
+  await api
+    .post("/api/blogs")
+    .send(newBlog)
+    .expect(400)
+})
+
+after(async () => {
+  try {
+    await mongoose.connection.close()
+  } catch (error) {
+    console.error('Error closing MongoDB connection:', error)
+  }
+})
 
 const blogs = [
   {
