@@ -1,4 +1,33 @@
-const BlogForm = (handleBlogChange, newBlog, addBlog) => {
+import { useState, useEffect } from 'react'
+const BlogForm = ({createBlog}) => {
+
+  const [newBlog, setNewBlog] = useState({
+      title: '',
+      author: '',
+      url: ''
+  })
+
+  const handleBlogChange = (event) => {
+    const { name, value } = event.target
+    setNewBlog({
+      ...newBlog,
+      [name]: value
+    })
+  }
+
+  const addBlog = (event) => {
+    event.preventDefault()
+    createBlog(
+      newBlog
+    )
+
+    setNewBlog({
+      title: '',
+      author: '',
+      url: ''
+    })
+  }
+
   return (
     <div>
       <h2>create new</h2>
@@ -12,7 +41,8 @@ const BlogForm = (handleBlogChange, newBlog, addBlog) => {
             onChange={handleBlogChange}
           />
         </div>
-        <div> author:
+        <div>
+          author:
           <input
             type="text"
             value={newBlog.author}
