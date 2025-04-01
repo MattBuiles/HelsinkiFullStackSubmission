@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PropTypes from 'prop-types'
 
 const Blog = ({ blog, handleLikes, handleDelete, loggedUser }) => {
   const [detailsVisible, setDetailsVisible] = useState(false)
@@ -46,7 +47,7 @@ const Blog = ({ blog, handleLikes, handleDelete, loggedUser }) => {
 
 
   return (
-    <div style={blogStyle}>
+    <div style={blogStyle} className='blog'>
       <div>
         {blog.title} {blog.author} 
         <button onClick={toggleDetails}>
@@ -54,7 +55,7 @@ const Blog = ({ blog, handleLikes, handleDelete, loggedUser }) => {
         </button>
       </div>
       {detailsVisible && (
-        <div>
+        <div className='blogDetails'>
           <div>{blog.url}</div>
           <div>
             likes: {blog.likes} <button onClick={onLike}>like</button>
@@ -69,6 +70,34 @@ const Blog = ({ blog, handleLikes, handleDelete, loggedUser }) => {
       )}
     </div>
   )
+}
+
+Blog.propTypes = {
+  blog: PropTypes.shape({
+    id: PropTypes.string,
+    _id: PropTypes.string,
+    title: PropTypes.string.isRequired,
+    author: PropTypes.string.isRequired,
+    url: PropTypes.string.isRequired,
+    likes: PropTypes.number.isRequired,
+    user: PropTypes.oneOfType([
+      PropTypes.shape({
+        id: PropTypes.string,
+        _id: PropTypes.string,
+        username: PropTypes.string,
+        name: PropTypes.string
+      }),
+      PropTypes.string
+    ])
+  }).isRequired,
+  handleLikes: PropTypes.func.isRequired,
+  handleDelete: PropTypes.func.isRequired,
+  loggedUser: PropTypes.shape({
+    id: PropTypes.string,
+    _id: PropTypes.string,
+    username: PropTypes.string.isRequired,
+    name: PropTypes.string
+  }).isRequired
 }
 
 export default Blog
