@@ -16,11 +16,12 @@ blogsRouter.post('/', userExtractor, async (request, response, next) => {
       ...request.body,
       user: user._id
     })
-    
+
     const savedBlog = await blog.save()
-    user.blogs = user.blogs.concat(savedBlog._id)
-    await user.save()
-    
+    // Actualiza el usuario de forma atómica para agregar el nuevo blog,
+    // evitando conflictos con el control de versión (optimistic concurrency)
+    await User.findByIdAndUpdate(user._id, { $push: { blogs: savedBlog._id } })
+
     response.status(201).json(savedBlog)
   } catch (error) {
     next(error)
@@ -70,6 +71,13 @@ blogsRouter.delete('/:id', userExtractor, async (request, response, next) => {
   }
 })
 
+blogsRouter.delete('/reset', async (request, response) => {
+  // Borrar todos los blogs
+  await Blog.deleteMany({})
+  // Limpiar el arreglo de blogs en cada usuario
+  await User.updateMany({}, { blogs: [] })
+  response.status(204).end()
+})
 
 blogsRouter.use(errorHandler)
 
