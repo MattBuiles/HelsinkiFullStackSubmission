@@ -5,7 +5,7 @@ import { setTimedNotification } from '../reducers/notificationReducer'
 const AnecdoteForm = () => {
   const dispatch = useDispatch()
 
-  const create = (event) => {
+  const create = async (event) => {
     event.preventDefault()
     const content = event.target[0].value
     event.target[0].value = ''

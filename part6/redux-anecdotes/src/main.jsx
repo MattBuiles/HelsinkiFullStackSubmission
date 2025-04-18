@@ -4,7 +4,6 @@ import App from './App'
 
 import store from './reducers/store'
 
-
 ReactDOM.createRoot(document.getElementById('root')).render(
   <Provider store={store}>
     <App />
