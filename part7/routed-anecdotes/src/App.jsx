@@ -4,6 +4,7 @@ import {
   Routes, Route, Link, useParams,
   useNavigate
 } from 'react-router-dom'
+import { useField } from './hooks'
 
 // Componente para mostrar notificaciones
 const Notification = ({ message }) => {
@@ -62,17 +63,17 @@ const About = () => (
 )
 
 const CreateNew = ({ addNew, setNotification }) => {
-  const [content, setContent] = useState('')
-  const [author, setAuthor] = useState('')
-  const [info, setInfo] = useState('')
+  const content = useField('text')
+  const author = useField("text")
+  const info = useField("text")
   const navigate = useNavigate()
 
   const handleSubmit = (e) => {
     e.preventDefault()
     const newAnecdote = {
-      content,
-      author,
-      info,
+      content: content.value,   // Solo el valor
+      author: author.value,     // Solo el valor
+      info: info.value,         // Solo el valor
       votes: 0
     }
     addNew(newAnecdote)
@@ -90,17 +91,22 @@ const CreateNew = ({ addNew, setNotification }) => {
       <form onSubmit={handleSubmit}>
         <div>
           content
-          <input name='content' value={content} onChange={(e) => setContent(e.target.value)} />
+          <input name='content' value={content.value} onChange={content.onChange} />
         </div>
         <div>
           author
-          <input name='author' value={author} onChange={(e) => setAuthor(e.target.value)} />
+          <input {...author} />
         </div>
         <div>
           url for more info
-          <input name='info' value={info} onChange={(e) => setInfo(e.target.value)} />
+          <input name='info' value={info.value} onChange={info.onChange} />
         </div>
-        <button>create</button>
+        <button type="submit">create</button>
+        <button type="button" onClick={() => {
+          content.onReset()
+          author.onReset()
+          info.onReset()
+        }}>reset</button>
       </form>
     </div>
   )
